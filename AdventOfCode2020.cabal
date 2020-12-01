@@ -1,0 +1,91 @@
+name:                AdventOfCode2020
+version:             0.1.0.0
+synopsis:            Advent of code - Season 2020
+description:         Please see README.md
+homepage:            https://github.com/guibou/AdventOfCode2020#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Guillaume Bouchard
+maintainer:          guillaum.bouchard@gmail.com
+copyright:           2020 Guillaume Bouchard
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:       Utils, All
+  build-depends:       base,
+                       hspec,
+                       megaparsec,
+                       cryptohash,
+                       base16-bytestring,
+                       bytestring,
+                       containers,
+                       parallel,
+                       time,
+                       vector,
+                       file-embed,
+                       unordered-containers,
+                       template-haskell,
+                       memoize,
+                       split,
+                       here,
+                       protolude,
+                       text,
+                       union-find,
+                       hex,
+                       matrix,
+                       hashable,
+                       mtl,
+                       generic-deriving,
+                       JuicyPixels,
+                       pqueue,
+                       random,
+                       sbv,
+                       PyF,
+                       ansi-terminal,
+                       linear,
+                       weigh,
+                       besout,
+                       lens,
+                       generic-lens,
+                       QuickCheck
+
+  default-extensions: TupleSections
+                    , DeriveAnyClass
+                    , StandaloneDeriving
+                    , DeriveGeneric
+                    , OverloadedStrings
+                    , BangPatterns
+                    , ViewPatterns
+                    , PatternSynonyms
+                    , ScopedTypeVariables
+                    , BinaryLiterals
+                    , TemplateHaskell
+                    , PartialTypeSignatures
+                    , QuasiQuotes
+                    , GeneralizedNewtypeDeriving
+                    , DerivingStrategies
+                    , NoImplicitPrelude
+                    , FlexibleContexts
+                    , LambdaCase
+                    , TypeApplications
+                    , NamedFieldPuns
+                    , MultiWayIf
+  ghc-options: -Wall -Wno-missing-signatures -fwarn-incomplete-uni-patterns -Wno-missing-home-modules -Wno-deprecations -Wno-partial-type-signatures
+
+  default-language:    Haskell2010
+
+executable alltests
+           main-is: src/MainAll.hs
+           build-depends:
+               AdventOfCode2020
+               , base
+               , text
+               , weigh
+
+source-repository head
+  type:     git
+  location: https://github.com/guibou/AdventOfCode2020
