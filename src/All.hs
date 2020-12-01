@@ -2,6 +2,8 @@ module All where
 
 import Utils
 
+import Day01
+
 import Weigh
 
 allDays = sortBy (comparing fst) $(thisModuleName)
