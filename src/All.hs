@@ -3,6 +3,7 @@ module All where
 import Utils
 
 import Day01
+import Day02
 
 import Weigh
 
