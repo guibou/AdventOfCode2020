@@ -4,6 +4,7 @@ import Utils
 
 import Day01
 import Day02
+import Day03
 
 import Weigh
 
