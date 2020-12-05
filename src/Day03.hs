@@ -31,8 +31,8 @@ inGrid gridXSize grid (posX, posY) = newPos `Set.member` grid
 -- * FIRST problem
 day grid slope = length $ snd $ partitionEithers $ do
   let
-    gridXSize = maximum (map fst (Set.toList grid))
-    gridYSize = maximum (map snd (Set.toList grid))
+    Just gridXSize = viaNonEmpty maximum1 (map fst (Set.toList grid))
+    Just gridYSize = viaNonEmpty maximum1 (map snd (Set.toList grid))
 
   walkGridAndCountTree (gridXSize, gridYSize) grid (0, 0) slope
 
@@ -51,7 +51,7 @@ walkGridAndCountTree size@(sizeX, sizeY) grid (posX, posY) slope@(dx, dy)
   in
     f $ walkGridAndCountTree size grid newPos slope
 
-ex0 = parseContent $ [fmt|\
+ex0 = parseContent [fmt|\
 ..##.......
 #...#...#..
 .#....#..#.

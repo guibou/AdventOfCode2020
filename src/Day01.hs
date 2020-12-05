@@ -31,7 +31,7 @@ day l = let
 day' :: [Int] -> _
 day' l = let
   entries = Set.fromList l
-  in head $ do
+  in viaNonEmpty head $ do
     x <- l
     y <- l
     guard $ (2020 - x - y) `Set.member` entries

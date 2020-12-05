@@ -1,6 +1,7 @@
 module Day05 where
 
 import Utils
+import qualified Relude.Unsafe as Unsafe
 import qualified Data.Text as Text
 
 -- date: 13:57
@@ -37,14 +38,14 @@ seatId :: (Int, Int) -> Int
 seatId (row, col) = row * 8 + col
 
 -- * FIRST problem
-day :: [Text] -> Int
-day = maximum . map (seatId . decode)
+day :: [Text] -> Maybe Int
+day = viaNonEmpty maximum1 . map (seatId . decode)
 
 -- * SECOND problem
 day' :: _ -> Maybe Int
 day' content = let
   ids = sort $ map (seatId . decode) content
-  in (+1) . fst <$> find (\(x, y) -> (x+1) /= y) (zip ids (unsafeTail ids))
+  in (+1) . fst <$> find (\(x, y) -> (x+1) /= y) (zip ids (Unsafe.tail ids))
 
 -- * Tests
 
@@ -57,6 +58,6 @@ test = do
       decode "BBFFBBFRLL" `shouldBe` (102, 4)
   describe "works" $ do
     it "on first star" $ do
-      day fileContent `shouldBe` 888
+      day fileContent `shouldBe` Just 888
     it "on second star" $ do
       day' fileContent `shouldBe` (Just 522)

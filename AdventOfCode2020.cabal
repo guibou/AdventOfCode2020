@@ -1,9 +1,10 @@
+cabal-version:       2.2
 name:                AdventOfCode2020
 version:             0.1.0.0
 synopsis:            Advent of code - Season 2020
 description:         Please see README.md
 homepage:            https://github.com/guibou/AdventOfCode2020#readme
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Guillaume Bouchard
 maintainer:          guillaum.bouchard@gmail.com
@@ -11,11 +12,10 @@ copyright:           2020 Guillaume Bouchard
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
-cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:       Utils, All
+  exposed-modules:     All, Utils
   build-depends:       base,
                        hspec,
                        megaparsec,
@@ -32,7 +32,7 @@ library
                        memoize,
                        split,
                        here,
-                       protolude,
+                       relude,
                        text,
                        union-find,
                        hex,
@@ -68,7 +68,6 @@ library
                     , QuasiQuotes
                     , GeneralizedNewtypeDeriving
                     , DerivingStrategies
-                    , NoImplicitPrelude
                     , FlexibleContexts
                     , LambdaCase
                     , TypeApplications
@@ -78,6 +77,13 @@ library
 
   default-language:    Haskell2010
 
+  -- Set relude (with extra) as the default prelude
+  mixins: base hiding (Prelude)
+        , relude (Relude as Prelude
+                 , Relude.Extra
+                 , Relude.Unsafe
+                 )
+
 executable alltests
            main-is: src/MainAll.hs
            build-depends:
@@ -85,6 +91,7 @@ executable alltests
                , base
                , text
                , weigh
+  default-language:    Haskell2010
 
 source-repository head
   type:     git

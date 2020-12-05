@@ -1,7 +1,5 @@
 module DayX where
 
-import Utils
-
 fileContent :: _
 fileContent = parseContent $(getFile)
 

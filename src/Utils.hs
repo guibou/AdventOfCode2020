@@ -1,8 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Utils (
     module Utils
-  , module Protolude
-  , module Protolude.Error
-  , module Protolude.Unsafe
+  , module Relude.Extra
   , HashMap
   , Vector
   , module Data.Function.Memoize
@@ -19,9 +18,9 @@ module Utils (
   , fmt -- From PyF
   ) where
 
-import Protolude
-import Protolude.Unsafe hiding (unsafeRead)
 import Linear
+import Relude.Extra
+import qualified Relude.Unsafe as Unsafe
 
 import Generics.Deriving.Enum (genum, GEnum)
 
@@ -37,7 +36,6 @@ import Control.Parallel.Strategies (parBuffer, using, rdeepseq)
 import Data.List.Split (chunksOf)
 
 import qualified Data.Set as Set
-import Data.HashMap.Strict (HashMap)
 import qualified Data.Map.Strict as Map
 import Data.Vector (Vector)
 
@@ -53,7 +51,6 @@ import Data.Function.Memoize
 import Test.Hspec
 import qualified Data.Text as Text
 import Data.String.Here
-import Protolude.Error
 
 import PyF
 
@@ -114,7 +111,7 @@ parBufferChunks l = let chunks = (chunksOf 4096 l)
 --
 
 getFile :: Q Exp
-getFile = fmap loc_module qLocation >>= \name -> embedStringFile ("content/" <> map toLower name)
+getFile = fmap loc_module qLocation >>= \name -> embedStringFile (Text.unpack $ "content/" <> Text.toLower (toText name))
 
 zipIndex :: V.Vector t -> V.Vector (Int, t)
 zipIndex v = V.zip (V.enumFromN 0 (V.length v)) v
@@ -145,11 +142,11 @@ select (x:xs) = (x, xs):((x:) <$$> (select xs))
 unsafeParse :: Parser t -> Text -> t
 unsafeParse p s = case parse (p <* eof) "" s of
   Right res -> res
-  Left e -> panic (Text.pack (errorBundlePretty e))
+  Left e -> error (Text.pack (errorBundlePretty e))
 
 -- Text utils
 unsafeRead :: Read t => Text -> t
-unsafeRead = unsafeFromJust . readMaybe . Text.unpack
+unsafeRead = Unsafe.fromJust . readMaybe . Text.unpack
 
 parse2D :: (Text -> a) -> Text -> [[a]]
 parse2D f s = map (map f . Text.words) (Text.lines s)
@@ -168,14 +165,13 @@ parse2DGrid f t = Map.fromList $ do
   pure ((x, y), v)
 
 getBounds :: Map (Int, Int) t -> ((Int, Int), (Int, Int))
-getBounds g =
-  let
-  minX = minimum $ map fst $ Map.keys g
-  minY = minimum $ map snd $ Map.keys g
-  maxX = maximum $ map fst $ Map.keys g
-  maxY = maximum $ map snd $ Map.keys g
+getBounds g = Unsafe.fromJust $ do
+  minX <- viaNonEmpty minimum1 $ map fst $ Map.keys g
+  minY <- viaNonEmpty minimum1 $ map snd $ Map.keys g
+  maxX <- viaNonEmpty maximum1 $ map fst $ Map.keys g
+  maxY <- viaNonEmpty maximum1 $ map snd $ Map.keys g
 
-  in ((minX, minY), (maxX, maxY))
+  pure ((minX, minY), (maxX, maxY))
 
 display2DGrid :: Map (Int, Int) Text -> IO ()
 display2DGrid g =
@@ -184,9 +180,9 @@ display2DGrid g =
   for_ [minY .. maxY] $ \y -> do
     for_ [minX .. maxX] $ \x -> do
       case Map.lookup (x, y) g of
-        Nothing -> putStr (" " :: Text)
-        Just v -> putStr v
-    putStrLn ("" :: Text)
+        Nothing -> putText " "
+        Just v -> putText v
+    putTextLn ""
 
 str2DGrid :: Map (Int, Int) Text -> Text
 str2DGrid g =

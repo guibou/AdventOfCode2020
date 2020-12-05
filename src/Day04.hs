@@ -5,6 +5,7 @@ import Text.Megaparsec
 import qualified Data.Text as Text
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Data.Char
 
 -- srat 16:22
 -- star at 16:38

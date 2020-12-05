@@ -1,6 +1,7 @@
 module Day02 where
 
 import Utils
+import qualified Relude.Unsafe as Unsafe
 import Text.Megaparsec
 
 
@@ -48,8 +49,8 @@ day = length . filter isValid
 -- * SECOND problem
 isValid' ((Policy (nMin, nMax) c), s) = (inPosA && not inPosB) || (not inPosA && inPosB)
   where
-    inPosA = s `unsafeIndex` (nMin - 1) == c
-    inPosB = s `unsafeIndex` (nMax - 1) == c
+    inPosA = s Unsafe.!! (nMin - 1) == c
+    inPosB = s Unsafe.!! (nMax - 1) == c
 
 day' = length . filter isValid'
 
