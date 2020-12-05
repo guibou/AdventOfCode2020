@@ -62,29 +62,6 @@ import PyF
 
 infixl 4 <$$>
 
--- * Torus enum
-
--- |
--- >>> data Test = A | B | C | D deriving (Bounded, Enum, Show)
--- >>> succWrap A
--- B
--- >>> succWrap D
--- A
--- >>> predWrap D
--- C
--- >>> predWrap A
--- D
-succWrap :: forall t. (Enum t, Bounded t) => t -> t
-succWrap = nWrap 1
-
-predWrap :: forall t. (Enum t, Bounded t) => t -> t
-predWrap = nWrap (-1)
-
-nWrap :: forall t. (Enum t, Bounded t) => Int -> t -> t
-nWrap d e = let idx = fromEnum e
-                m = (fromEnum (maxBound :: t)) + 1
-            in toEnum ((idx + d) `mod` m)
-
 countItem :: Eq a => a -> [a] -> Int
 countItem x l = countIf (==x) l
 
@@ -204,17 +181,6 @@ thisModuleName = do
   let t = filter ("Day"`isPrefixOf`) $ map (\(Module _ (ModName name)) -> name) mi
 
   pure (ListE (map (\x -> TupE [Just $ LitE (StringL x), Just $ VarE (mkName (x ++ ".test"))]) t))
-
--- Cycle
-cyclePred :: forall t. (Enum t, Bounded t) => t -> t
-cyclePred o
-  | fromEnum o == fromEnum (minBound :: t) = maxBound
-  | otherwise = pred o
-
-cycleSucc :: forall t. (Enum t, Bounded t) => t -> t
-cycleSucc o
-  | fromEnum o == fromEnum (maxBound :: t) = minBound
-  | otherwise = succ o
 
 pow10 :: Int -> Int
 pow10 a = 10 ^ a
