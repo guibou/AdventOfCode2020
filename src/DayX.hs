@@ -1,5 +1,9 @@
 module DayX where
 
+import Utils
+import qualified Relude.Unsafe as Unsafe
+import Relude.Extra
+
 fileContent :: _
 fileContent = parseContent $(getFile)
 
