@@ -16,12 +16,16 @@ fileContent = parseContent $(getFile)
 parseContent :: Text -> _
 parseContent = Map.fromList . unsafeParse (parseBag `sepBy` "\n")
 
-parseColor = (,) <$> parseWord <*> (" " *> parseWord)
+parseColor = do
+  w <- parseWord
+  void " "
+  w' <- parseWord
+  pure (w <> " " <> w')
 
 parseWord :: Parser Text
 parseWord = Text.pack <$> Prelude.many (oneOf ['a'..'z'])
 
-parseBag :: Parser ((Text, Text), [(Int, (Text, Text))])
+parseBag :: Parser (Text, [(Int, Text)])
 parseBag = do
   c <- parseColor
   void " bags contain "
@@ -33,7 +37,7 @@ parseBag = do
 
   pure (c, bags)
 
-parseCountedBag :: Parser (Int, (Text, Text))
+parseCountedBag :: Parser (Int, Text)
 parseCountedBag = do
   i <- parseNumber
   c <- parseColor
@@ -43,7 +47,7 @@ parseCountedBag = do
   pure (i, c)
 
 -- * Generics
-bagSize :: (Text, Text) -> Map (Text, Text) [(Int, (Text, Text))] -> Int
+bagSize :: Text -> Map Text [(Int, Text)] -> Int
 bagSize name m = let
   bagSizeMap = Map.map (\l -> 1 + sum (map (\(i, b) -> i * (Unsafe.fromJust (Map.lookup b bagSizeMap))) l)) m
   in Unsafe.fromJust $ Map.lookup name bagSizeMap
@@ -70,7 +74,7 @@ howManyCanContain bagName m = length (filter identity (Map.elems bagContainMap))
 
 
 day :: _ -> Int
-day = howManyCanContain ("shiny", "gold")
+day = howManyCanContain ("shiny gold")
 
 
 -- * SECOND problem
@@ -83,7 +87,7 @@ dark blue bags contain 2 dark violet bags.
 dark violet bags contain no other bags.|]
 
 day' :: _ -> Int
-day' = subtract 1 . bagSize ("shiny","gold")
+day' = subtract 1 . bagSize ("shiny gold")
 
 -- * Tests
 
