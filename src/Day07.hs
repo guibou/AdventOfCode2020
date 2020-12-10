@@ -44,9 +44,9 @@ parseCountedBag = do
 
 -- * Generics
 bagSize :: (Text, Text) -> Map (Text, Text) [(Int, (Text, Text))] -> Int
-bagSize name m = case Map.lookup name m of
-  Just l -> 1 + sum (map (\(i, b) -> i * bagSize b m) l)
-  Nothing -> error "WTF"
+bagSize name m = let
+  bagSizeMap = Map.map (\l -> 1 + sum (map (\(i, b) -> i * (Unsafe.fromJust (Map.lookup b bagSizeMap))) l)) m
+  in Unsafe.fromJust $ Map.lookup name bagSizeMap
 
 -- * FIRST problem
 ex0 = parseContent [fmt|light red bags contain 1 bright white bag, 2 muted yellow bags.
@@ -59,11 +59,14 @@ vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
 faded blue bags contain no other bags.
 dotted black bags contain no other bags.|]
 
-containedIn bagName m bag
-  | bagName `elem` (map snd bag) = True
-  | otherwise = any (\n -> (containedIn bagName m (Unsafe.fromJust $ Map.lookup n m))) (map snd bag)
 
-howManyCanContain bagName m = length (filter (\b -> containedIn bagName m (snd b)) (Map.toList m))
+howManyCanContain bagName m = length (filter identity (Map.elems bagContainMap))
+  where
+    bagContainMap = Map.map (\b -> containedIn b) m
+
+    containedIn bag
+      | bagName `elem` (map snd bag) = True
+      | otherwise = any (\n -> (Unsafe.fromJust $ Map.lookup n bagContainMap)) (map snd bag)
 
 
 day :: _ -> Int
