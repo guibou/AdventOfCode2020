@@ -14,17 +14,17 @@ import Data.Char
 fileContent = parseContent $(getFile)
 
 parseContent :: Text -> _
-parseContent c = unsafeParse (parsePassport `sepBy` "@") (Text.replace "\n\n" "@" c)
+parseContent c = unsafeParse (parsePassport `sepBy` "\n") c
 
 parseField = do
-  name <- Text.Megaparsec.some $ choice (map single ['a'..'z'])
+  name <- Text.Megaparsec.some $ oneOf ['a'..'z']
   void ":"
-  value <- Text.Megaparsec.some $ choice (map single (['a'..'z'] <> ['0'..'9'] <> "#"))
+  value <- Text.Megaparsec.some $ oneOf (['a'..'z'] <> ['0'..'9'] <> "#")
 
   pure $ (Text.pack name, Text.pack value)
 
 parsePassport = Map.fromList <$> do
-  parseField `sepBy` choice [" ", "\n"]
+  parseField `endBy` choice [() <$ " ", () <$ "\n", eof]
 
 mandatoryFields = Set.fromList $ words "byr iyr eyr hgt hcl ecl pid"
 
