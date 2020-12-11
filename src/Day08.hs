@@ -9,8 +9,11 @@ import qualified Data.Set as Set
 -- star 1: 18:52
 -- star 2: 18:59
 
-data Op = Jmp Int | Nop Int | Acc Int
+data OpCode = Jmp | Nop | Acc
   deriving Show
+
+data Instr = Instr OpCode !Int
+  deriving (Show)
 
 parseOp = lexeme $ choice [
   "acc" $> Acc,
@@ -22,7 +25,7 @@ parseInstr = do
   op <- parseOp
   n <- parseNumber
 
-  pure $ op n
+  pure $ Instr op n
 
 fileContent :: _
 fileContent = parseContent $(getFile)
@@ -44,11 +47,12 @@ run code = go (Machine 0 0) Set.empty
       | pc `Set.member` visited = Loop acc
       | otherwise = go (step m (code Unsafe.!! pc)) (Set.insert pc visited)
 
-step (Machine pc acc) op = case op of
-  Nop _ -> Machine (pc + 1) acc
-  Acc da -> Machine (pc + 1) (acc + da)
-  Jmp dpc -> Machine (pc + dpc) acc
-
+step (Machine pc acc) (Instr op d) = let
+  (dpc, dacc) = case op of
+    Nop -> (1, 0)
+    Acc -> (1, d)
+    Jmp -> (d, 0)
+  in Machine (pc + dpc) (acc + dacc)
 
 
 -- * FIRST problem
@@ -66,14 +70,12 @@ day = run
 
 -- * SECOND problem
 alternateCodes [] = [[]]
-alternateCodes (x:xs) = case x of
-  Acc da -> ((Acc da):) <$> alternateCodes xs
-  Jmp d -> (((Jmp d):) <$> alternateCodes xs)
-           <>
-           (((Nop d):) <$> [xs])
-  Nop d -> (((Jmp d):) <$> [xs])
-           <>
-           (((Nop d):) <$> alternateCodes xs)
+alternateCodes (Instr x d:xs) = let
+  alts = alternateCodes xs
+  in case x of
+  Acc -> ((Instr Acc d):) <$> alts
+  Jmp -> (((Instr Jmp d):) <$> alts) <> (((Instr Nop d):) <$> [xs])
+  Nop -> (((Instr Jmp d):) <$> [xs]) <> (((Instr Nop d):) <$> alts)
 
 
 isTerminate (Terminate _) = True
