@@ -4,6 +4,7 @@ import Utils
 import qualified Data.Text as Text
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Relude.Unsafe as Unsafe
 
 -- start: 20:25. With a pause for the kid, 21:02.
 -- start computation at 21:17.
@@ -74,23 +75,27 @@ adjDir = do
 
   pure (dx, dy)
 
-adj' :: (Int, Int) -> Set (Int, Int) -> Set (Int, Int) -> (Int, Int) -> Int
-adj' (bx, by) seats usedPos pos =
+compute_grid_voisins seats = Map.fromList $ do
   let
+    (_, (bx, by)) = getBounds seats
+    seatSet = Set.fromList seats
     lookupInDir (x, y) (dx, dy)
-      | x < 0 || x > bx || y < 0 || y > by = False
-      | newPos `Set.member` seats = newPos `Set.member` usedPos
+      | x < 0 || x > bx || y < 0 || y > by = Nothing
+      | newPos `Set.member` seatSet = Just newPos
       | otherwise = lookupInDir (x + dx, y + dy) (dx, dy)
       where newPos = (x + dx, y + dy)
-  in
-    sum $ do
-       d <- adjDir
 
-       let used = lookupInDir pos d
+  seat <- seats
 
-       guard used
+  let copains = do
+        dirCopain <- adjDir
 
-       pure 1
+        case lookupInDir seat dirCopain of
+          Nothing -> mzero
+          Just copain -> pure copain
+
+  pure (seat, copains)
+
 
 
 -- * FIRST problem
@@ -99,12 +104,11 @@ day' seatsPos = length $ fixpoint (iterSeat' seatsPos) Set.empty
 
 iterSeat' :: [(Int, Int)] -> Set (Int, Int) -> Set (Int, Int)
 iterSeat' seatsPos = let
-  (_, bounds) = getBounds seatsPos
-  lseats = Set.fromList seatsPos
+  gridVoisins = compute_grid_voisins seatsPos
   in \usedOnes -> Set.fromList $ do
     seatPos <- seatsPos
 
-    let occupiedNext = adj' bounds lseats usedOnes seatPos
+    let occupiedNext = length $ filter (\p -> p `Set.member` usedOnes) (Unsafe.fromJust $ Map.lookup seatPos gridVoisins)
         occupied = seatPos `Set.member` usedOnes
 
     guard $ (not occupied && occupiedNext == 0) || ((occupied && occupiedNext < 5))
