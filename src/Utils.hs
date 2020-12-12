@@ -198,6 +198,7 @@ bisect p bounds = uncurry go bounds
         mid = (a + b) `div` 2
 
 -- | Apply f until it become stable
+fixpoint :: Eq a => (a -> a) -> a -> a
 fixpoint f x = let
   x' = f x
   in
