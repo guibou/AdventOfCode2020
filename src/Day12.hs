@@ -42,26 +42,26 @@ F7
 R90
 F11|]
 
--- * FIRST problem
-data Ship = Ship Direction (Int, Int)
+data Ship t = Ship t (Int, Int)
   deriving (Show)
 
-startShip = Ship E (0, 0)
-
-stepShip :: Action -> Ship -> Ship
-stepShip (Action m i) ship@(Ship currentDir _) = case m of
-  MotionDirection d -> move d i ship
-  L -> turn i ship
-  R -> turn (360 - i) ship
-  F -> move currentDir i ship
-
-move d i (Ship currentDir (px, py)) = Ship currentDir (px + dx, py + dy)
+move d i (x, y) = (x + dx, y + dy)
   where
     (dx, dy) = case d of
       N -> (0, -i)
       S -> (0, i)
       E -> (i, 0)
       W -> (-i, 0)
+
+-- * FIRST problem
+startShip = Ship E (0, 0)
+
+stepShip :: Action -> Ship Direction -> Ship Direction
+stepShip (Action m i) ship@(Ship currentDir currentPos) = case m of
+  MotionDirection d -> Ship currentDir (move d i currentPos)
+  L -> turn i ship
+  R -> turn (360 - i) ship
+  F -> Ship currentDir (move currentDir i currentPos)
 
 turn 0 ship = ship
 turn deg (Ship curDir pos) = turn (deg - 90) (Ship (prev curDir) pos)
@@ -73,37 +73,26 @@ day actions = let
   in abs x + abs y
 
 -- * SECOND problem
-data ShipWP = ShipWP (Int, Int) (Int, Int)
-  deriving (Show)
+startShipWP = Ship (10, -1) (0, 0)
 
-startShipWP = ShipWP (10, -1) (0, 0)
-
-stepShipWP :: Action -> ShipWP -> ShipWP
-stepShipWP (Action m i) ship@(ShipWP currentWP _) = case m of
-  MotionDirection d -> moveWP d i ship
+stepShipWP :: Action -> Ship (Int, Int) -> Ship (Int, Int)
+stepShipWP (Action m i) ship@(Ship currentWP currentPos) = case m of
+  MotionDirection d -> Ship (move d i currentWP) currentPos
   L -> turnWP i ship
   R -> turnWP (360 - i) ship
   F -> moveShipWP currentWP i ship
 
-moveShipWP (wpX, wpY) i (ShipWP currentWP (x, y)) = ShipWP currentWP (x + i * wpX, y + i * wpY)
-
-moveWP d i (ShipWP (wx, wy) pos) = ShipWP (wx + dx, wy + dy) pos
-  where
-    (dx, dy) = case d of
-      N -> (0, -i)
-      S -> (0, i)
-      E -> (i, 0)
-      W -> (-i, 0)
+moveShipWP (wpX, wpY) i (Ship currentWP (x, y)) = Ship currentWP (x + i * wpX, y + i * wpY)
 
 turnWP 0 ship = ship
-turnWP deg (ShipWP curWP pos) = turnWP (deg - 90) (ShipWP (nextWP curWP) pos)
+turnWP deg (Ship curWP pos) = turnWP (deg - 90) (Ship (nextWP curWP) pos)
 
 nextWP (x, y) = (y, -x)
 
 stepsShipWP actions = foldl' (flip stepShipWP) startShipWP actions
 
 day' actions = let
-  ShipWP _ (x, y) = stepsShipWP actions
+  Ship _ (x, y) = stepsShipWP actions
   in abs x + abs y
 
 -- * Tests
