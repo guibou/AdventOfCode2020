@@ -49,7 +49,8 @@ day :: [(Int, Int)] -> Int
 day seatsPos = length $ fixpoint (iterSeat seatsPos) Set.empty
 
 iterSeat :: [(Int, Int)] -> Set (Int, Int) -> Set (Int, Int)
-iterSeat seatsPos usedOnes = Set.fromList $ do
+iterSeat seatsPos usedOnes = let
+  in Set.fromList $ do
   seatPos <- seatsPos
 
   let occupiedNext = length (filter (\testPos -> testPos `Set.member` usedOnes) (adj seatPos))
@@ -73,13 +74,12 @@ adjDir = do
 
   pure (dx, dy)
 
-adj' :: Set (Int, Int) -> Set (Int, Int) -> (Int, Int) -> Int
-adj' seats usedPos pos =
+adj' :: (Int, Int) -> Set (Int, Int) -> Set (Int, Int) -> (Int, Int) -> Int
+adj' (bx, by) seats usedPos pos =
   let
     lookupInDir (x, y) (dx, dy)
-      | x < 0 || x > 100 || y < 0 || y > 100 = False
-      | newPos `Set.member` usedPos = True
-      | newPos `Set.member` seats = False
+      | x < 0 || x > bx || y < 0 || y > by = False
+      | newPos `Set.member` seats = newPos `Set.member` usedPos
       | otherwise = lookupInDir (x + dx, y + dy) (dx, dy)
       where newPos = (x + dx, y + dy)
   in
@@ -98,16 +98,18 @@ day' :: [(Int, Int)] -> Int
 day' seatsPos = length $ fixpoint (iterSeat' seatsPos) Set.empty
 
 iterSeat' :: [(Int, Int)] -> Set (Int, Int) -> Set (Int, Int)
-iterSeat' seatsPos usedOnes = Set.fromList $ do
-  let lseats = Set.fromList seatsPos
-  seatPos <- seatsPos
+iterSeat' seatsPos = let
+  (_, bounds) = getBounds seatsPos
+  lseats = Set.fromList seatsPos
+  in \usedOnes -> Set.fromList $ do
+    seatPos <- seatsPos
 
-  let occupiedNext = adj' lseats usedOnes seatPos
-      occupied = seatPos `Set.member` usedOnes
+    let occupiedNext = adj' bounds lseats usedOnes seatPos
+        occupied = seatPos `Set.member` usedOnes
 
-  guard $ (not occupied && occupiedNext == 0) || ((occupied && occupiedNext < 5))
+    guard $ (not occupied && occupiedNext == 0) || ((occupied && occupiedNext < 5))
 
-  pure seatPos
+    pure seatPos
 
 -- * Tests
 

@@ -141,18 +141,18 @@ parse2DGrid f t = Map.fromList $ do
 
   pure ((x, y), v)
 
-getBounds :: Map (Int, Int) t -> ((Int, Int), (Int, Int))
+getBounds :: [(Int, Int)] -> ((Int, Int), (Int, Int))
 getBounds g = Unsafe.fromJust $ do
-  minX <- viaNonEmpty minimum1 $ map fst $ Map.keys g
-  minY <- viaNonEmpty minimum1 $ map snd $ Map.keys g
-  maxX <- viaNonEmpty maximum1 $ map fst $ Map.keys g
-  maxY <- viaNonEmpty maximum1 $ map snd $ Map.keys g
+  minX <- viaNonEmpty minimum1 $ map fst $ g
+  minY <- viaNonEmpty minimum1 $ map snd $ g
+  maxX <- viaNonEmpty maximum1 $ map fst $ g
+  maxY <- viaNonEmpty maximum1 $ map snd $ g
 
   pure ((minX, minY), (maxX, maxY))
 
 display2DGrid :: Map (Int, Int) Text -> IO ()
 display2DGrid g =
-  let ((minX, minY), (maxX, maxY)) = getBounds g
+  let ((minX, minY), (maxX, maxY)) = getBounds (Map.keys g)
   in
   for_ [minY .. maxY] $ \y -> do
     for_ [minX .. maxX] $ \x -> do
@@ -163,7 +163,7 @@ display2DGrid g =
 
 str2DGrid :: Map (Int, Int) Text -> Text
 str2DGrid g =
-  let ((minX, minY), (maxX, maxY)) = getBounds g
+  let ((minX, minY), (maxX, maxY)) = getBounds (Map.keys g)
   in
   Text.intercalate "\n" $ flip map [minY .. maxY] $ \y -> do
     Text.stripEnd $ Text.intercalate "" $ flip map [minX .. maxX] $ \x -> do
