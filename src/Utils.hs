@@ -40,6 +40,7 @@ import qualified Data.Map.Strict as Map
 import Data.Vector (Vector)
 
 import Data.FileEmbed (embedStringFile)
+import Bezout
 
 import qualified Data.Vector as V
 
@@ -217,3 +218,16 @@ fastMatrixPower n m v = do
 
     sqrtMatrix = fastMatrixPower approximateSqrt m $ fastMatrixPower approximateSqrt m v
   sqrtMatrix !*! (fastMatrixPower rest m v)
+
+-- reste chinois
+getEs :: [Integer] -> [Integer]
+getEs l = do
+  (n, product->n') <- select l
+
+  let fact = inverseMod n' n
+  pure $ fact * n'
+
+resteChinois :: [(Integer, Integer)] -> Integer
+resteChinois (traceShowId->l) = let
+  es = getEs (map snd l)
+  in sum $ zipWith (*) (map fst l) es
