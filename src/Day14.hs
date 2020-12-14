@@ -12,7 +12,10 @@ fileContent = parseContent $(getFile)
 data MaskAtom = X | O | I
   deriving (Show)
 
-data Action = Mem Int Int | Mask [MaskAtom]
+data Mem = Mem Int Int
+  deriving (Show)
+
+data Action = MemAction Mem | Mask [MaskAtom]
   deriving (Show)
 
 parseMem = do
@@ -20,7 +23,7 @@ parseMem = do
   offset <- parseNumber
   void "] = "
   n <- parseNumber
-  pure $ Mem offset n
+  pure $ MemAction $ Mem offset n
 
 parseMask = do
   void "mask = "
@@ -47,11 +50,12 @@ overrideWithMask value mask = go value (reverse mask)
       I -> 1
       X -> val `mod` 2
 
-runMachine :: [Action] -> Map Int Int
-runMachine = snd . (foldl' f (undefined, Map.empty))
+runMachine memOverride = snd . (foldl' f (error "using an unset mask", Map.empty))
   where
     f (_currentMask, m) (Mask t) = (t, m)
-    f (currentMask, m) (Mem offset n) = (currentMask, Map.insert offset (overrideWithMask n currentMask) m)
+    f (currentMask, mem) (MemAction memAction) = memOverride memAction (currentMask, mem)
+
+f1 (Mem offset n) (currentMask, m) = (currentMask, Map.insert offset (overrideWithMask n currentMask) m)
 
 -- * FIRST problem
 ex0 = parseContent [fmt|\
@@ -61,7 +65,7 @@ mem[7] = 101
 mem[8] = 0|]
 
 day :: _ -> Int
-day = sum . Map.elems . runMachine
+day = sum . Map.elems . (runMachine f1)
 
 -- * SECOND problem
 floatingMask value mask = go value (reverse mask)
@@ -75,11 +79,7 @@ floatingMask value mask = go value (reverse mask)
         I -> (+1) <$> sub
         X -> sub ++ ((+1) <$> sub)
 
-runMachine' :: [Action] -> _
-runMachine' = snd . (foldl' f (error "using an unset mask", Map.empty))
-  where
-    f (_currentMask, m) (Mask t) = (t, m)
-    f (currentMask, mem) (Mem initialOffset n) = (currentMask, foldl' write mem (floatingMask initialOffset currentMask))
+f2 (Mem initialOffset n) (currentMask, mem) = (currentMask, foldl' write mem (floatingMask initialOffset currentMask))
       where
         write m' offset = Map.insert offset n m'
 
@@ -89,7 +89,7 @@ mask = 00000000000000000000000000000000X0XX
 mem[26] = 1|]
 
 day' :: _ -> Int
-day' = sum . Map.elems . runMachine'
+day' = sum . Map.elems . (runMachine f2)
 
 -- * Tests
 
