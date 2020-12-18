@@ -51,7 +51,8 @@ library
                        besout,
                        lens,
                        generic-lens,
-                       QuickCheck
+                       QuickCheck,
+                       parser-combinators
 
   default-extensions: TupleSections
                     , DeriveAnyClass
