@@ -4,6 +4,7 @@ import Utils
 import qualified Relude.Unsafe as Unsafe
 import qualified Data.Text as Text
 import qualified Data.HashSet as HashSet
+import qualified Data.Vector as Vector
 
 -- start: 19:00 --> 19:07 -> 19:33 (I'm stupid, my code was using the example value... Last 20 minutes because of that)
 
@@ -53,18 +54,15 @@ ex0 = parseContent [fmt|35
 -- * SECOND problem
 day' nP numbers = let
   v = day nP numbers
-  in
-  viaNonEmpty head $ do
-    dd <- tails numbers
-    ii <- inits dd
+  nums = Vector.fromList numbers
 
-    guard $ length ii >= 2
-    guard $ sum ii == v
-    pure $ do
-      a <- viaNonEmpty maximum1 ii
-      b <- viaNonEmpty minimum1 ii
-
-      pure $ a + b
+  go !offsetStart !offsetEnd !currentSum = case compare currentSum v of
+    EQ -> let
+      slice = Vector.slice offsetStart (offsetEnd - offsetStart + 1) nums
+      in Vector.minimum slice + Vector.maximum slice
+    LT -> go offsetStart (offsetEnd + 1) (currentSum + nums Vector.! (offsetEnd + 1))
+    GT -> go (offsetStart + 1) offsetEnd (currentSum - nums Vector.! offsetStart)
+  in go 0 1 (nums Vector.! 0 + nums Vector.! 1)
 
 -- * Tests
 
@@ -74,9 +72,9 @@ test = do
     it "of first star" $ do
       day 5 ex0 `shouldBe` 127
     it "of second star" $ do
-      day' 5 ex0 `shouldBe` Just (Just 62)
+      day' 5 ex0 `shouldBe` 62
   describe "works" $ do
     it "on first star" $ do
       day 25 fileContent `shouldBe` 85848519
     it "on second star" $ do
-      day' 25 fileContent `shouldBe` Just (Just 13414198)
+      day' 25 fileContent `shouldBe` 13414198
