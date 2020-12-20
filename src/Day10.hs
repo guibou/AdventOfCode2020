@@ -1,13 +1,9 @@
-module Day10 where
+module Day10 (test) where
 
 import Utils
 import qualified Relude.Unsafe as Unsafe
-import Relude.Extra
 import qualified Data.Text as Text
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import Text.Megaparsec
-import Data.Function.Memoize
+import Linear
 
 -- 15:56 -> 16:06 -> 16:21
 
@@ -33,12 +29,12 @@ ex0 = parseContent [fmt|16
 -- * FIRST problem
 day :: [Int] -> Int
 day (sort->l) = let
-  (_, d1, d3) = foldl' f (0, 0, 1) l
+  (V3 _ d1 d3) = foldl' f (V3 0 0 1) l
   in d1 * d3
   where
-    f (lastVoltage, count1, count3) newVoltage = (newVoltage,
-                                                  count1 + bool 0 1 (dV == 1),
-                                                  count3 + bool 0 1 (dV == 3))
+    f (V3 lastVoltage !count1 !count3) newVoltage = V3 newVoltage
+                                                     (count1 + bool 0 1 (dV == 1))
+                                                     (count3 + bool 0 1 (dV == 3))
       where
         dV = newVoltage - lastVoltage
 
@@ -47,12 +43,13 @@ day (sort->l) = let
 day' :: _ -> Int
 day' = arange
 
-arange' f prev [x]
-  | x - prev <= 3 = 1
+arange' _ previous [x]
+  | x - previous <= 3 = 1
   | otherwise = 0
-arange' f prev (x:xs)
-  | x - prev <= 3 = f x xs + f prev xs
+arange' f previous (x:xs)
+  | x - previous <= 3 = f x xs + f previous xs
   | otherwise = 0
+arange' _ _ [] = error "Impossible"
 
 arange :: [Int] -> Int
 arange = (memoFix2 arange') 0 . sort
