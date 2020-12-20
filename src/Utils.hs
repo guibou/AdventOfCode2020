@@ -228,6 +228,6 @@ getEs l = do
   pure $ fact * n'
 
 resteChinois :: [(Integer, Integer)] -> Integer
-resteChinois (traceShowId->l) = let
+resteChinois l = let
   es = getEs (map snd l)
   in sum $ zipWith (*) (map fst l) es

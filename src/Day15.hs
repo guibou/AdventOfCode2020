@@ -56,9 +56,9 @@ test = do
     it "of first star" $ do
       day [1,3,2] star1n `shouldBe` 1
     it "of second star" $ do
-      day [1,3,2] star2n `shouldBe` 0
+      day [1,3,2] star2n `shouldBe` 2578
   describe "works" $ do
     it "on first star" $ do
-      day fileContent star1n `shouldBe` 1228
+      day fileContent star1n `shouldBe` 1428
     it "on second star" $ do
-      day fileContent star2n `shouldBe` 1238
+      day fileContent star2n `shouldBe` 3718541
