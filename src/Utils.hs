@@ -135,40 +135,32 @@ unsafeRead2D = parse2D unsafeRead
 unsafeRead1D :: Read t => Text -> [t]
 unsafeRead1D = map unsafeRead . Text.words
 
-parse2DGrid :: (Text -> a) -> Text -> Map (Int, Int) a
+parse2DGrid :: (Text -> a) -> Text -> Map (V2 Int) a
 parse2DGrid f t = Map.fromList $ do
   (y, l) <- zip [0..] (parse2D f t)
   (x, v) <- zip [0..] l
 
-  pure ((x, y), v)
+  pure (V2 x y, v)
 
-getBounds :: [(Int, Int)] -> ((Int, Int), (Int, Int))
+getBounds :: [(V2 Int)] -> ((V2 Int), (V2 Int))
 getBounds g = Unsafe.fromJust $ do
-  minX <- viaNonEmpty minimum1 $ map fst $ g
-  minY <- viaNonEmpty minimum1 $ map snd $ g
-  maxX <- viaNonEmpty maximum1 $ map fst $ g
-  maxY <- viaNonEmpty maximum1 $ map snd $ g
+  minX <- viaNonEmpty minimum1 $ map (view _x) $ g
+  minY <- viaNonEmpty minimum1 $ map (view _y) $ g
+  maxX <- viaNonEmpty maximum1 $ map (view _x) $ g
+  maxY <- viaNonEmpty maximum1 $ map (view _y) $ g
 
-  pure ((minX, minY), (maxX, maxY))
+  pure (V2 minX minY, V2 maxX maxY)
 
-display2DGrid :: Map (Int, Int) Text -> IO ()
-display2DGrid g =
-  let ((minX, minY), (maxX, maxY)) = getBounds (Map.keys g)
-  in
-  for_ [minY .. maxY] $ \y -> do
-    for_ [minX .. maxX] $ \x -> do
-      case Map.lookup (x, y) g of
-        Nothing -> putText " "
-        Just v -> putText v
-    putTextLn ""
+display2DGrid :: Map (V2 Int) Text -> IO ()
+display2DGrid = putTextLn . str2DGrid
 
-str2DGrid :: Map (Int, Int) Text -> Text
+str2DGrid :: Map (V2 Int) Text -> Text
 str2DGrid g =
-  let ((minX, minY), (maxX, maxY)) = getBounds (Map.keys g)
+  let (V2 minX minY, V2 maxX maxY) = getBounds (Map.keys g)
   in
   Text.intercalate "\n" $ flip map [minY .. maxY] $ \y -> do
     Text.stripEnd $ Text.intercalate "" $ flip map [minX .. maxX] $ \x -> do
-      case Map.lookup (x, y) g of
+      case Map.lookup (V2 x y) g of
         Nothing -> " "
         Just v -> v
 

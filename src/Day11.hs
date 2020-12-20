@@ -5,6 +5,7 @@ import qualified Data.Text as Text
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Relude.Unsafe as Unsafe
+import Linear
 
 -- start: 20:25. With a pause for the kid, 21:02.
 -- start computation at 21:17.
@@ -12,14 +13,14 @@ import qualified Relude.Unsafe as Unsafe
 fileContent :: _
 fileContent = parseContent $(getFile)
 
-parseContent :: Text -> [(Int, Int)]
+parseContent :: Text -> [V2 Int]
 parseContent t = do
   (lc, l) <- zip [0..] (Text.lines t)
   (cc, c) <- zip [0..] (Text.unpack l)
 
   guard $ c == 'L'
 
-  pure (cc, lc)
+  pure $ V2 cc lc
 
 -- * Generics
 ex0 = parseContent [fmt|\
@@ -35,21 +36,21 @@ L.LLLLLL.L
 L.LLLLL.LL|]
 
 
-adj :: (Int, Int) -> [(Int, Int)]
-adj (x, y) = do
+adj :: V2 Int -> [V2 Int]
+adj (V2 x y) = do
   dx <- [-1..1]
   dy <- [-1..1]
 
   guard $ (dx, dy) /= (0, 0)
 
-  pure (x + dx, y + dy)
+  pure $ V2 (x + dx) (y + dy)
 
 
 -- * FIRST problem
-day :: [(Int, Int)] -> Int
+day :: [V2 Int] -> Int
 day seatsPos = length $ fixpoint (iterSeat seatsPos) Set.empty
 
-iterSeat :: [(Int, Int)] -> Set (Int, Int) -> Set (Int, Int)
+iterSeat :: [V2 Int] -> Set (V2 Int) -> Set (V2 Int)
 iterSeat seatsPos usedOnes = let
   in Set.fromList $ do
   seatPos <- seatsPos
@@ -61,29 +62,25 @@ iterSeat seatsPos usedOnes = let
 
   pure seatPos
 
-setToMap :: [(Int, Int)] -> Set (Int, Int) -> _
-setToMap s used = display2DGrid $ Map.fromList (map (\p -> (p, bool "L" "#" (p `Set.member` used))) s)
-
-
 -- * SECOND problem
-adjDir :: [(Int, Int)]
+adjDir :: [V2 Int]
 adjDir = do
   dx <- [-1..1]
   dy <- [-1..1]
 
   guard $ (dx, dy) /= (0, 0)
 
-  pure (dx, dy)
+  pure $ V2 dx dy
 
 compute_grid_voisins seats = Map.fromList $ do
   let
-    (_, (bx, by)) = getBounds seats
+    (_, V2 bx by) = getBounds seats
     seatSet = Set.fromList seats
-    lookupInDir (x, y) (dx, dy)
+    lookupInDir (V2 x y) (V2 dx dy)
       | x < 0 || x > bx || y < 0 || y > by = Nothing
       | newPos `Set.member` seatSet = Just newPos
-      | otherwise = lookupInDir (x + dx, y + dy) (dx, dy)
-      where newPos = (x + dx, y + dy)
+      | otherwise = lookupInDir (V2 (x + dx) (y + dy)) (V2 dx dy)
+      where newPos = V2 (x + dx) (y + dy)
 
   seat <- seats
 
@@ -99,10 +96,10 @@ compute_grid_voisins seats = Map.fromList $ do
 
 
 -- * FIRST problem
-day' :: [(Int, Int)] -> Int
+day' :: [V2 Int] -> Int
 day' seatsPos = length $ fixpoint (iterSeat' seatsPos) Set.empty
 
-iterSeat' :: [(Int, Int)] -> Set (Int, Int) -> Set (Int, Int)
+iterSeat' :: [V2 Int] -> Set (V2 Int) -> Set (V2 Int)
 iterSeat' seatsPos = let
   gridVoisins = compute_grid_voisins seatsPos
   in \usedOnes -> Set.fromList $ do

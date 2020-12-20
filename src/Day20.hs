@@ -4,6 +4,7 @@ import Utils
 import qualified Relude.Unsafe as Unsafe
 import qualified Data.Text as Text
 import qualified Data.Map as Map
+import Linear (V2(..))
 
 -- start:: 14:19. first star: 15:39.
 -- 16:41 all is coded for second star, just it is wrong...
@@ -70,24 +71,24 @@ mergeConstraint (Constraint a b c d) (Constraint a' b' c' d') = Constraint (merg
       | v == v' = Just v
       | otherwise = error "Merge issue"
 
-buildConstraint (t, b, l, r) (x, y) = Map.fromList $ [
-      ((x, y-1), Constraint Nothing (Just t) Nothing Nothing),
-      ((x, y+1), Constraint (Just b) Nothing Nothing Nothing),
-      ((x+1, y), Constraint Nothing Nothing (Just r) Nothing),
-      ((x-1, y), Constraint Nothing Nothing Nothing (Just l))
+buildConstraint (t, b, l, r) (V2 x y) = Map.fromList $ [
+      (V2 x (y-1), Constraint Nothing (Just t) Nothing Nothing),
+      (V2 x (y+1), Constraint (Just b) Nothing Nothing Nothing),
+      (V2 (x+1) y, Constraint Nothing Nothing (Just r) Nothing),
+      (V2 (x-1) y, Constraint Nothing Nothing Nothing (Just l))
      ]
 solve :: [(Int, ((B, B, B, B), [B]))] -> _
 solve [] = error "Cannot solve an empty list"
-solve ((firstId,((t, b, l, r), shape)):grids) = go grids firstConstraints (Map.singleton (0, 0) (firstId, shape))
+solve ((firstId,((t, b, l, r), shape)):grids) = go grids firstConstraints (Map.singleton (V2 0 0) (firstId, shape))
   where
-    firstConstraints = buildConstraint (t, b, l, r) (0, 0)
+    firstConstraints = buildConstraint (t, b, l, r) (V2 0 0)
 
-    go :: [(Int, ((B, B, B, B), [B]))] -> Map (Int, Int) ConstraintT -> Map (Int, Int) (Int, [B]) -> _
+    go :: [(Int, ((B, B, B, B), [B]))] -> Map (V2 Int) ConstraintT -> Map (V2 Int) (Int, [B]) -> _
     go [] _ res = res
     go cases constraints res = let
       allCases :: [(Int, ((B, B, B, B), [B]))] = concatMap (\(i,c) -> (i,) <$> transform c) cases
 
-      allConstraints :: [((Int, Int), ConstraintT)] = Map.toList constraints
+      allConstraints :: [((V2 Int), ConstraintT)] = Map.toList constraints
 
       allCombinations = (,) <$> allCases <*> allConstraints
 
@@ -104,20 +105,20 @@ removeCase i = filter (\(i', _) -> i /= i')
 
 -- * Part 2
 
-buildImage :: Map (Int, Int) [B] -> Text
+buildImage :: Map (V2 Int) [B] -> Text
 buildImage m = let
   tiles = Map.map removeBorders m
 
   tileSizes = let
-    firstTile = Unsafe.fromJust (Map.lookup (0, 0) tiles)
+    firstTile = Unsafe.fromJust (Map.lookup (V2 0 0) tiles)
     in length firstTile
 
-  toIdx :: ((Int, Int), [B]) -> [((Int, Int), Text)]
-  toIdx ((bigX, bigY), content) = do
+  toIdx :: ((V2 Int), [B]) -> [((V2 Int), Text)]
+  toIdx (V2 bigX bigY, content) = do
     (dy, l) <- zip [0..] content
     (dx, c) <- zip [0..] l
 
-    pure ((bigX * tileSizes + dx, bigY * tileSizes + dy), Text.singleton c)
+    pure (V2 (bigX * tileSizes + dx) (bigY * tileSizes + dy), Text.singleton c)
 
   bigMap = Map.fromList $ concatMap toIdx (Map.toList tiles)
 
@@ -287,13 +288,13 @@ Tile 3079:
 
 day input = let
   res = Map.map fst $ solve input
-  ((minX, minY), (maxX, maxY)) = getBounds (Map.keys res)
+  (V2 minX minY, V2 maxX maxY) = getBounds (Map.keys res)
 
   in product $ map (\c -> Unsafe.fromJust $ Map.lookup c res) $ [
-  (minX, minY),
-  (minX, maxY),
-  (maxX, minY),
-  (maxX, maxY)]
+  V2 minX minY,
+  V2 minX maxY,
+  V2 maxX minY,
+  V2 maxX maxY]
 
 -- * SECOND problem
 day' = solution
