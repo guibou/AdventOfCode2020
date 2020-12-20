@@ -52,7 +52,8 @@ library
                        lens,
                        generic-lens,
                        QuickCheck,
-                       parser-combinators
+                       parser-combinators,
+                       Earley
 
   default-extensions: TupleSections
                     , DeriveAnyClass
