@@ -11,3 +11,5 @@ Starts stack with `nix-shell --run 'cabal new-repl'` to start a session and `:l 
 # Benchmarks
 
 run ./bench.sh to generate a benchmark of all tests.
+
+I'm targeting to run all problems in less than 1s.
