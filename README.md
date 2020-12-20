@@ -7,3 +7,7 @@ Each days are in `src/DayN.hs`.
 Starts stack with `nix-shell --run 'cabal new-repl'` to start a session and `:l YourDay`. You can also use `direnv` and everything will be setup automagically.
 
 `Utils` contains a shitload of utils ;)
+
+# Benchmarks
+
+run ./bench.sh to generate a benchmark of all tests.
