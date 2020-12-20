@@ -3,7 +3,7 @@ module Day09 where
 import Utils
 import qualified Relude.Unsafe as Unsafe
 import qualified Data.Text as Text
-import qualified Data.Set as Set
+import qualified Data.HashSet as HashSet
 
 -- start: 19:00 --> 19:07 -> 19:33 (I'm stupid, my code was using the example value... Last 20 minutes because of that)
 
@@ -19,8 +19,8 @@ day nP numbers = let
   n' = drop nP numbers
 
   check preamble (x:xs) = let
-    pSet = Set.fromList preamble
-    in if any (\j -> (x - j) `Set.member` pSet) preamble
+    pSet = HashSet.fromList preamble
+    in if any (\j -> (x - j) `HashSet.member` pSet) preamble
        then check (drop 1 preamble ++ [x]) xs
        else x
 

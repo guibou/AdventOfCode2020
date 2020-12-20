@@ -3,7 +3,7 @@ module Day11 where
 import Utils
 import qualified Data.Text as Text
 import qualified Data.Map as Map
-import qualified Data.Set as Set
+import qualified Data.HashSet as HashSet
 import qualified Relude.Unsafe as Unsafe
 import Linear
 
@@ -48,15 +48,15 @@ adj (V2 x y) = do
 
 -- * FIRST problem
 day :: [V2 Int] -> Int
-day seatsPos = length $ fixpoint (iterSeat seatsPos) Set.empty
+day seatsPos = length $ fixpoint (iterSeat seatsPos) HashSet.empty
 
-iterSeat :: [V2 Int] -> Set (V2 Int) -> Set (V2 Int)
+iterSeat :: [V2 Int] -> HashSet (V2 Int) -> HashSet (V2 Int)
 iterSeat seatsPos usedOnes = let
-  in Set.fromList $ do
+  in HashSet.fromList $ do
   seatPos <- seatsPos
 
-  let occupiedNext = length (filter (\testPos -> testPos `Set.member` usedOnes) (adj seatPos))
-      occupied = seatPos `Set.member` usedOnes
+  let occupiedNext = length (filter (\testPos -> testPos `HashSet.member` usedOnes) (adj seatPos))
+      occupied = seatPos `HashSet.member` usedOnes
 
   guard $ (not occupied && occupiedNext == 0) || ((occupied && occupiedNext < 4))
 
@@ -75,10 +75,10 @@ adjDir = do
 compute_grid_voisins seats = Map.fromList $ do
   let
     (_, V2 bx by) = getBounds seats
-    seatSet = Set.fromList seats
+    seatSet = HashSet.fromList seats
     lookupInDir (V2 x y) (V2 dx dy)
       | x < 0 || x > bx || y < 0 || y > by = Nothing
-      | newPos `Set.member` seatSet = Just newPos
+      | newPos `HashSet.member` seatSet = Just newPos
       | otherwise = lookupInDir (V2 (x + dx) (y + dy)) (V2 dx dy)
       where newPos = V2 (x + dx) (y + dy)
 
@@ -97,16 +97,16 @@ compute_grid_voisins seats = Map.fromList $ do
 
 -- * FIRST problem
 day' :: [V2 Int] -> Int
-day' seatsPos = length $ fixpoint (iterSeat' seatsPos) Set.empty
+day' seatsPos = length $ fixpoint (iterSeat' seatsPos) HashSet.empty
 
-iterSeat' :: [V2 Int] -> Set (V2 Int) -> Set (V2 Int)
+iterSeat' :: [V2 Int] -> HashSet (V2 Int) -> HashSet (V2 Int)
 iterSeat' seatsPos = let
   gridVoisins = compute_grid_voisins seatsPos
-  in \usedOnes -> Set.fromList $ do
+  in \usedOnes -> HashSet.fromList $ do
     seatPos <- seatsPos
 
-    let occupiedNext = length $ filter (\p -> p `Set.member` usedOnes) (Unsafe.fromJust $ Map.lookup seatPos gridVoisins)
-        occupied = seatPos `Set.member` usedOnes
+    let occupiedNext = length $ filter (\p -> p `HashSet.member` usedOnes) (Unsafe.fromJust $ Map.lookup seatPos gridVoisins)
+        occupied = seatPos `HashSet.member` usedOnes
 
     guard $ (not occupied && occupiedNext == 0) || ((occupied && occupiedNext < 5))
 

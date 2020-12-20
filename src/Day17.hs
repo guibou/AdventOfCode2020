@@ -1,18 +1,18 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Day17 where
+module Day17 (test) where
 
 import Utils
 import qualified Data.Text as Text
-import qualified Data.Set as Set
+import qualified Data.HashSet as HashSet
 import Linear
 
 -- start: 19:04
 -- first star: 19:19
 -- second star: 20:11
 
-fileContent :: ExtendedFlatSpace t a => Set t
+fileContent :: ExtendedFlatSpace t a => HashSet t
 fileContent = parseContent [fmt|\
 ....###.
 #...####
@@ -24,11 +24,11 @@ fileContent = parseContent [fmt|\
 ######.#|]
 
 
-class (Num t, Ord t, Num b, Enum b, Eq b) => ExtendedFlatSpace t b | t -> b where
+class (Hashable t, Num t, Ord t, Num b, Enum b, Eq b) => ExtendedFlatSpace t b | t -> b where
   fromFlat :: b -> b -> t
   delta :: [t]
 
-instance (Ord t, Num t, Enum t) => ExtendedFlatSpace (V3 t) t where
+instance (Hashable t, Ord t, Num t, Enum t) => ExtendedFlatSpace (V3 t) t where
   fromFlat x y = V3 x y 0
 
   delta = do
@@ -41,7 +41,7 @@ instance (Ord t, Num t, Enum t) => ExtendedFlatSpace (V3 t) t where
     guard $ d /= V3 0 0 0
     pure $ d
 
-instance (Ord t, Num t, Enum t) => ExtendedFlatSpace (V4 t) t where
+instance (Hashable t, Ord t, Num t, Enum t) => ExtendedFlatSpace (V4 t) t where
   fromFlat x y = V4 x y 0 0
 
   delta = do
@@ -56,8 +56,8 @@ instance (Ord t, Num t, Enum t) => ExtendedFlatSpace (V4 t) t where
 
     pure d
 
-parseContent :: ExtendedFlatSpace t a => Text -> Set t
-parseContent t = Set.fromList $ do
+parseContent :: ExtendedFlatSpace t a => Text -> HashSet t
+parseContent t = HashSet.fromList $ do
   (l, line) <- zip [0..] (Text.lines t)
   (c, item) <- zip [0..] (Text.unpack line)
 
@@ -70,21 +70,21 @@ copains p = do
   d <- delta
   pure $ p + d
 
-step :: (Show t, Num t) => ExtendedFlatSpace t a => Set t -> Set t
-step actives = Set.fromList $ do
-  let interesting = ordNub (Set.toList actives >>= copains)
+step :: (Show t, Num t) => ExtendedFlatSpace t a => HashSet t -> HashSet t
+step actives = HashSet.fromList $ do
+  let interesting = ordNub (HashSet.toList actives >>= copains)
   candidate <- interesting
 
   let
-    active = Set.member candidate actives
-    activeNeighbors = length (filter (\c -> Set.member c actives) (copains candidate))
+    active = HashSet.member candidate actives
+    activeNeighbors = length (filter (\c -> HashSet.member c actives) (copains candidate))
 
   guard $ (active && (activeNeighbors == 2 || activeNeighbors == 3)) || (not active && activeNeighbors == 3)
 
   pure candidate
 
 -- * FIRST problem
-ex0 :: ExtendedFlatSpace t a => Set t
+ex0 :: ExtendedFlatSpace t a => HashSet t
 ex0 = parseContent [fmt|\
 .#.
 ..#
@@ -92,7 +92,7 @@ ex0 = parseContent [fmt|\
 
 applyN f n = foldl' (.) id (replicate n f)
 
-day :: (Show t, ExtendedFlatSpace t a) => Set t -> Int
+day :: (Show t, ExtendedFlatSpace t a) => HashSet t -> Int
 day = length . applyN step 6
 
 -- * SECOND problem
