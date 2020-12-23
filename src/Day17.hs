@@ -90,14 +90,8 @@ ex0 = parseContent [fmt|\
 ..#
 ###|]
 
-applyN f n = foldl' (.) id (replicate n f)
-
 day :: (Show t, ExtendedFlatSpace t a) => HashSet t -> Int
-day = length . applyN step 6
-
--- * SECOND problem
-day' :: _ -> Int
-day' = undefined
+day = length . applyN 6 step
 
 -- * Tests
 

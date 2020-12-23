@@ -223,3 +223,7 @@ resteChinois :: [(Integer, Integer)] -> Integer
 resteChinois l = let
   es = getEs (map snd l)
   in sum $ zipWith (*) (map fst l) es
+
+applyN :: Int -> (a -> a) -> a -> a
+applyN 0 _ !x = x
+applyN n f !x = applyN (n - 1) f (f x)
