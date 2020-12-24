@@ -110,7 +110,8 @@ executable alltests
               Day20,
               Day21,
               Day22,
-              Day23
+              Day23,
+              Day24
            hs-source-dirs: src
 
            build-depends:
