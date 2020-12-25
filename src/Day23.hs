@@ -1,8 +1,9 @@
 {-# LANGUAGE GADTs #-}
 module Day23 where
 
+import Relude.Unsafe as Unsafe
 import Utils
-import qualified Data.IntMap as IntMap
+import qualified Data.Vector.Unboxed.Mutable as VM
 
 -- start: 14:39. 15:03
 -- Second star, stuck in a stupid O(n*n) algo. Stopped at 15:40.
@@ -20,88 +21,94 @@ parseContent v = go v []
 
 -- * Generics
 -- Main solution
-data Status = Status
-  Int
-  -- ^ The current cup.
-  [Int]
-  -- ^ Here we have a backward list containing the value already seen.
-  [Int]
-  -- ^ Here we have the rest of the list, not yet consumed values.
-  (IntMap [Int])
-  -- ^ This are the "picked" triples, which need to be inserted back after a value.
-  deriving (Show)
+solve :: Int -> Int -> (_ -> IO a) -> [Int] -> IO a
+solve reps size finisher l = do
+  arr :: VM.IOVector Int32 <- VM.new (size + 1)
 
-startStatus (x:xs) = Status x [] xs IntMap.empty
-startStatus [] = error "Empty init list"
+  for_ (zip l (Unsafe.tail l)) $ \(a, b) -> do
+    VM.unsafeWrite arr a (fromIntegral b)
 
-popOne :: Status -> (Status, Int)
-popOne (Status current seen [] waitingPicked) = popOne (Status current [] (reverse seen) waitingPicked)
-popOne (Status current seen (x:xs) waitingPicked) = case IntMap.lookup x waitingPicked of
-  Nothing -> (Status current seen xs waitingPicked, x)
-  Just picked -> (Status current seen (picked <> xs) (IntMap.delete x waitingPicked), x)
+  VM.unsafeWrite arr (Unsafe.last l) (fromIntegral (if size == 9 then Unsafe.head l else 10))
 
-step :: Int -> Status -> Status
-step m status = let
-  (s', p0) = popOne status
-  (s'', p1) = popOne s'
-  (Status current seen rest waitingPicked, p2) = popOne s''
+  for_ [10..size] $ \i ->
+    VM.unsafeWrite arr i (fromIntegral (i+1))
 
-  picked = [p0, p1, p2]
-  dest = findDestination m (current - 1) picked
+  when (size /= 9) $ do
+    VM.unsafeWrite arr size (fromIntegral $ Unsafe.head l)
 
-  status' = Status current seen rest (IntMap.insertWith (error "duplicate") dest picked waitingPicked)
+  let
+    go 0 _ = pure ()
+    go n current = do
+      p0 <- VM.unsafeRead arr (fromIntegral current)
+      p1 <- VM.unsafeRead arr (fromIntegral p0)
+      p2 <- VM.unsafeRead arr (fromIntegral p1)
+      next <- VM.unsafeRead arr (fromIntegral p2)
 
-  in pickNextCup status'
+      let
+        dest = findDestination (fromIntegral size) (current - 1) (p0, p1, p2)
 
-pickNextCup :: Status -> Status
-pickNextCup (popOne -> (Status current seen nextItems waitingPicked, current')) = Status current' (current:seen) nextItems waitingPicked
+      destNext <- VM.unsafeRead arr (fromIntegral dest)
 
-finishStatus s@(Status current seen nextItems waitingPicked)
-  | null waitingPicked = current:nextItems <> reverse seen
-  | otherwise = finishStatus (pickNextCup s)
+      -- Rechain pickle
+      VM.unsafeWrite arr (fromIntegral dest) p0
+      VM.unsafeWrite arr (fromIntegral p2) destNext
+
+      -- Skip pickle
+      VM.unsafeWrite arr (fromIntegral current) next
+
+      go (n - 1) next
+
+  go reps (fromIntegral $ Unsafe.head l)
+
+  finisher arr
 
 -- *
-
+findDestination :: Int32 -> Int32 -> (Int32, Int32, Int32) -> Int32
 findDestination m 0 picked = findDestination m m picked
-findDestination m t picked
-  | not (t `elem` picked) = t
+findDestination m t picked@(a, b, c)
+  | t /= a && t /= b && t /= c = t
   | otherwise = findDestination m (t - 1) picked
-
-score (finishStatus -> l) = let
-  (prefix, (_:suffix)) = break (==1) l
-  in mconcat $ map show $ suffix <> prefix
-
 
 -- * FIRST problem
 ex0 :: [Int]
 ex0 = parseContent 389125467
 
-day :: _ -> String
-day = score . applyN 100 (step 9) . startStatus
+day l = concatMap show <$> solve 100 9 finisher l
+  where
+    finisher :: VM.IOVector Int32 -> IO [Int]
+    finisher arr = do
+      let
+        go 1 = pure []
+        go current = do
+          next <- VM.unsafeRead arr (fromIntegral current)
+          res <- go next
+          pure (fromIntegral current:res)
+
+
+      go =<< VM.unsafeRead arr 1
+
 
 -- * SECOND problem
 oneMillion = 1000000
 tenMillion = 10 * oneMillion
 
-day' :: [Int] -> Int
-day' l = score' $ applyN tenMillion (step oneMillion) (startStatus $ l <> [10..oneMillion])
+day' :: [Int] -> IO Int
+day' = solve tenMillion oneMillion $ \arr -> do
+  p0 <- VM.unsafeRead arr 1
+  p1 <- VM.unsafeRead arr (fromIntegral p0)
 
-score' (finishStatus -> l) = go (cycle l)
-  where
-    go (1:x:y:_) = x * y
-    go (_:xs) = go xs
-    go _ = error "Working on an empty list, that's surprising"
+  pure $ fromIntegral p0 * fromIntegral p1
 
 -- * Tests
 test :: Spec
 test = do
   describe "simple examples" $ do
     it "of first star" $ do
-      day ex0 `shouldBe` "67384529"
+      day ex0 `shouldReturn` "67384529"
     it "of second star" $ do
-      day' ex0 `shouldBe` 149245887792
+      day' ex0 `shouldReturn` 149245887792
   describe "works" $ do
     it "on first star" $ do
-      day fileContent `shouldBe` "28946753"
+      day fileContent `shouldReturn` "28946753"
     it "on second star" $ do
-      day' fileContent `shouldBe` 519044017360
+      day' fileContent `shouldReturn` 519044017360
